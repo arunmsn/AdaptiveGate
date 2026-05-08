@@ -16,6 +16,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ixr/ixr/internal/adapters/providers/anthropic"
 	"github.com/ixr/ixr/internal/adapters/providers/openai"
 	"github.com/ixr/ixr/internal/ingress"
 	"github.com/ixr/ixr/pkg/provider"
@@ -48,9 +49,12 @@ func Start(opts ...Option) error {
 	if key := os.Getenv("OPENAI_API_KEY"); key != "" {
 		registry["openai"] = openai.New(key, "")
 	}
+	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+		registry["anthropic"] = anthropic.New(key, "")
+	}
 
 	if len(registry) == 0 {
-		return fmt.Errorf("ixr: no providers configured — set OPENAI_API_KEY")
+		return fmt.Errorf("ixr: no providers configured — set OPENAI_API_KEY and/or ANTHROPIC_API_KEY")
 	}
 
 	// Model-prefix router: gpt-* → openai, claude-* → anthropic (day 3).
@@ -63,7 +67,11 @@ func Start(opts ...Option) error {
 			}
 			return p, nil
 		case strings.HasPrefix(model, "claude-"):
-			return nil, fmt.Errorf("anthropic provider not yet implemented (phase 1 day 3)")
+			p, ok := registry["anthropic"]
+			if !ok {
+				return nil, fmt.Errorf("anthropic provider not configured; set ANTHROPIC_API_KEY")
+			}
+			return p, nil
 		default:
 			return nil, fmt.Errorf("no provider found for model %q", model)
 		}
