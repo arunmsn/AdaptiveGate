@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/ixr/ixr/pkg/plugin"
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/plugin"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 const defaultBufferSize = 1024

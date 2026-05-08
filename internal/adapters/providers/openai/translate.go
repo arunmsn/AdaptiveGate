@@ -1,6 +1,6 @@
 package openai
 
-import "github.com/ixr/ixr/pkg/schema"
+import "github.com/YashVishwas/ixr/pkg/schema"
 
 // OpenAI wire types — kept internal to this adapter.
 // Translate between these and pkg/schema so the rest of ixr never

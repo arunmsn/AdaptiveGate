@@ -3,8 +3,8 @@
 package pluginmgr
 
 import (
-	"github.com/ixr/ixr/pkg/bus"
-	"github.com/ixr/ixr/pkg/plugin"
+	"github.com/YashVishwas/ixr/pkg/bus"
+	"github.com/YashVishwas/ixr/pkg/plugin"
 )
 
 // Manager registers plugins with a Bus.

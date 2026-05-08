@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	ixr "github.com/ixr/ixr/pkg/ixr"
+	ixr "github.com/YashVishwas/ixr/pkg/ixr"
 )
 
 func main() {

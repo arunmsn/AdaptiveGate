@@ -1,7 +1,7 @@
 package pluginmgr
 
 import (
-	"github.com/ixr/ixr/pkg/plugin"
+	"github.com/YashVishwas/ixr/pkg/plugin"
 )
 
 // Registry holds a list of plugins to be registered at startup.

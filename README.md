@@ -3,7 +3,7 @@
 A tiny, fast, embeddable inference proxy written in Go.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Go Reference](https://pkg.go.dev/badge/github.com/ixr/ixr.svg)](https://pkg.go.dev/github.com/ixr/ixr)
+[![Go Reference](https://pkg.go.dev/badge/github.com/YashVishwas/ixr.svg)](https://pkg.go.dev/github.com/YashVishwas/ixr)
 
 ---
 
@@ -18,7 +18,7 @@ every call now flows through a layer that is **schema-aware, observable, and ext
 **path 1: embed in a Go service**
 
 ```go
-import ixr "github.com/ixr/ixr/pkg/ixr"
+import ixr "github.com/YashVishwas/ixr/pkg/ixr"
 
 func main() {
     go ixr.Start() // that's it.
@@ -88,8 +88,8 @@ import (
     "encoding/json"
     "log/slog"
 
-    "github.com/ixr/ixr/pkg/plugin"
-    "github.com/ixr/ixr/pkg/schema"
+    "github.com/YashVishwas/ixr/pkg/plugin"
+    "github.com/YashVishwas/ixr/pkg/schema"
 )
 
 type CostLogger struct{}

@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // Plugin implements plugin.EventConsumer.

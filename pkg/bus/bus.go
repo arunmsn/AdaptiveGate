@@ -6,8 +6,8 @@ package bus
 import (
 	"context"
 
-	"github.com/ixr/ixr/pkg/plugin"
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/plugin"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // Bus delivers CallEvents to all registered EventConsumers.

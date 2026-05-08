@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ixr/ixr/pkg/bus"
-	"github.com/ixr/ixr/pkg/provider"
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/bus"
+	"github.com/YashVishwas/ixr/pkg/provider"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // Router picks a provider for a given model name.
