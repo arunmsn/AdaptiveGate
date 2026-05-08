@@ -34,20 +34,28 @@ client = OpenAI(base_url="http://localhost:7000")
 **path 2: run as a binary**
 
 ```bash
-ixr serve --config ixr.yaml
+# build once
+go build -o ixr ./cmd/ixr
+
+# run with a config file, or just env vars
+./ixr --config ixr.yaml
+OPENAI_API_KEY=sk-... ./ixr
 ```
 
 **path 3: docker**
 
 ```bash
-docker run -p 7000:7000 -e OPENAI_API_KEY=xxx ghcr.io/ixr/ixr
+docker build -t ixr .
+docker run -p 7000:7000 -e OPENAI_API_KEY=sk-... ixr
 ```
 
 **config (minimal)**
 
 ```yaml
 # ixr.yaml
-port: 7000
+server:
+  port: 7000
+
 providers:
   openai:
     api_key: ${OPENAI_API_KEY}
