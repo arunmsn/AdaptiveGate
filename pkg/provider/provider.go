@@ -6,7 +6,7 @@ package provider
 import (
 	"context"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // Provider translates ixr's canonical schema to and from a specific LLM provider's

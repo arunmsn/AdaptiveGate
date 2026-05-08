@@ -5,7 +5,7 @@ package plugin
 import (
 	"context"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // EventConsumer receives every CallEvent emitted on the bus.

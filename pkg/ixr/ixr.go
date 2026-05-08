@@ -1,6 +1,6 @@
 // Package ixr is the one-line entry point for embedding ixr in a Go service.
 //
-//	import ixr "github.com/ixr/ixr/pkg/ixr"
+//	import ixr "github.com/YashVishwas/ixr/pkg/ixr"
 //
 //	func main() {
 //	    go ixr.Start()
@@ -16,15 +16,15 @@ import (
 	"strings"
 	"syscall"
 
-	auditlog "github.com/ixr/ixr/plugins/audit-log"
+	auditlog "github.com/YashVishwas/ixr/plugins/audit-log"
 
-	"github.com/ixr/ixr/internal/adapters/bus"
-	cfgloader "github.com/ixr/ixr/internal/adapters/config"
-	"github.com/ixr/ixr/internal/adapters/pluginmgr"
-	"github.com/ixr/ixr/internal/adapters/providers/anthropic"
-	"github.com/ixr/ixr/internal/adapters/providers/openai"
-	"github.com/ixr/ixr/internal/ingress"
-	"github.com/ixr/ixr/pkg/provider"
+	"github.com/YashVishwas/ixr/internal/adapters/bus"
+	cfgloader "github.com/YashVishwas/ixr/internal/adapters/config"
+	"github.com/YashVishwas/ixr/internal/adapters/pluginmgr"
+	"github.com/YashVishwas/ixr/internal/adapters/providers/anthropic"
+	"github.com/YashVishwas/ixr/internal/adapters/providers/openai"
+	"github.com/YashVishwas/ixr/internal/ingress"
+	"github.com/YashVishwas/ixr/pkg/provider"
 )
 
 // Option configures the ixr instance.

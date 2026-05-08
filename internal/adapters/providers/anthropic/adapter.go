@@ -11,7 +11,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 const (

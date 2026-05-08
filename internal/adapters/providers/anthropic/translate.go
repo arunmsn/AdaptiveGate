@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // Anthropic Messages API wire types — internal to this adapter.

@@ -1,4 +1,4 @@
-module github.com/ixr/ixr
+module github.com/YashVishwas/ixr
 
 go 1.22
 
