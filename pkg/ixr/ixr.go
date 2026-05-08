@@ -16,6 +16,10 @@ import (
 	"strings"
 	"syscall"
 
+	auditlog "github.com/ixr/ixr/plugins/audit-log"
+
+	"github.com/ixr/ixr/internal/adapters/bus"
+	"github.com/ixr/ixr/internal/adapters/pluginmgr"
 	"github.com/ixr/ixr/internal/adapters/providers/anthropic"
 	"github.com/ixr/ixr/internal/adapters/providers/openai"
 	"github.com/ixr/ixr/internal/ingress"
@@ -77,11 +81,18 @@ func Start(opts ...Option) error {
 		}
 	})
 
+	// Event bus + plugins.
+	memBus := bus.NewMemory(0)
+	mgr := pluginmgr.New(memBus)
+	mgr.Register(&auditlog.Plugin{})
+
 	mux := http.NewServeMux()
-	mux.Handle("POST /v1/chat/completions", ingress.NewChatHandler(router))
+	mux.Handle("POST /v1/chat/completions", ingress.NewChatHandler(router, memBus))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	go memBus.Start(ctx)
 
 	return ingress.NewServer(cfg.port, mux).Run(ctx)
 }
