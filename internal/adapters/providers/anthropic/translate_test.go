@@ -3,7 +3,7 @@ package anthropic
 import (
 	"testing"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 func TestToWireRequest_SystemLifted(t *testing.T) {

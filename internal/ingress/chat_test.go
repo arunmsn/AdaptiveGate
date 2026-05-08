@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ixr/ixr/pkg/plugin"
-	"github.com/ixr/ixr/pkg/provider"
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/plugin"
+	"github.com/YashVishwas/ixr/pkg/provider"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 // stubProvider is a minimal provider.Provider for testing.

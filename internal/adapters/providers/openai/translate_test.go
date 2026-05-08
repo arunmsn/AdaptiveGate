@@ -3,7 +3,7 @@ package openai
 import (
 	"testing"
 
-	"github.com/ixr/ixr/pkg/schema"
+	"github.com/YashVishwas/ixr/pkg/schema"
 )
 
 func TestToWireRequest(t *testing.T) {
