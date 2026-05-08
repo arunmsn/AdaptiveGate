@@ -41,12 +41,12 @@ type wireUsage struct {
 	OutputTokens int `json:"output_tokens"`
 }
 
+const defaultMaxTokens = 4096
+
 // toWireRequest converts ixr's canonical envelope to the Anthropic Messages API format.
 // System messages are lifted out of the messages array into the top-level system field,
 // as required by the Anthropic API.
 func toWireRequest(req *schema.RequestEnvelope) wireRequest {
-	const defaultMaxTokens = 4096
-
 	var system string
 	var msgs []wireMessage
 

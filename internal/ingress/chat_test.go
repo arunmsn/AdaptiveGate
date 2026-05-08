@@ -1,0 +1,155 @@
+package ingress
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/ixr/ixr/pkg/plugin"
+	"github.com/ixr/ixr/pkg/provider"
+	"github.com/ixr/ixr/pkg/schema"
+)
+
+// stubProvider is a minimal provider.Provider for testing.
+type stubProvider struct {
+	name string
+	resp *schema.ResponseEnvelope
+	err  error
+}
+
+func (s *stubProvider) Name() string { return s.name }
+func (s *stubProvider) Chat(_ context.Context, _ *schema.RequestEnvelope) (*schema.ResponseEnvelope, error) {
+	return s.resp, s.err
+}
+
+func fixedRouter(p provider.Provider) Router {
+	return func(_ string) (provider.Provider, error) { return p, nil }
+}
+
+func post(h http.Handler, body string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	return w
+}
+
+func TestChatHandler_MethodNotAllowed(t *testing.T) {
+	h := NewChatHandler(fixedRouter(&stubProvider{}), nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/chat/completions", nil)
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("status: got %d, want 405", w.Code)
+	}
+}
+
+func TestChatHandler_BadJSON(t *testing.T) {
+	h := NewChatHandler(fixedRouter(&stubProvider{}), nil)
+	w := post(h, "not json")
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status: got %d, want 400", w.Code)
+	}
+}
+
+func TestChatHandler_MissingModel(t *testing.T) {
+	h := NewChatHandler(fixedRouter(&stubProvider{}), nil)
+	w := post(h, `{"messages":[{"role":"user","content":"hi"}]}`)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status: got %d, want 400", w.Code)
+	}
+}
+
+func TestChatHandler_StreamRejected(t *testing.T) {
+	h := NewChatHandler(fixedRouter(&stubProvider{}), nil)
+	w := post(h, `{"model":"gpt-4o","stream":true,"messages":[]}`)
+	if w.Code != http.StatusNotImplemented {
+		t.Errorf("status: got %d, want 501", w.Code)
+	}
+}
+
+func TestChatHandler_RouterError(t *testing.T) {
+	router := Router(func(_ string) (provider.Provider, error) {
+		return nil, fmt.Errorf("unknown model")
+	})
+	h := NewChatHandler(router, nil)
+	w := post(h, `{"model":"unknown-model","messages":[{"role":"user","content":"hi"}]}`)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status: got %d, want 400", w.Code)
+	}
+}
+
+func TestChatHandler_ProviderError(t *testing.T) {
+	p := &stubProvider{name: "test", err: fmt.Errorf("upstream down")}
+	h := NewChatHandler(fixedRouter(p), nil)
+	w := post(h, `{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}]}`)
+	if w.Code != http.StatusBadGateway {
+		t.Errorf("status: got %d, want 502", w.Code)
+	}
+}
+
+func TestChatHandler_HappyPath(t *testing.T) {
+	p := &stubProvider{
+		name: "test",
+		resp: &schema.ResponseEnvelope{
+			ID:    "resp-1",
+			Model: "gpt-4o",
+			Choices: []schema.Choice{
+				{Index: 0, Message: schema.Message{Role: "assistant", Content: "hi"}, FinishReason: "stop"},
+			},
+		},
+	}
+	h := NewChatHandler(fixedRouter(p), nil)
+	w := post(h, `{"model":"gpt-4o","messages":[{"role":"user","content":"hello"}]}`)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", w.Code)
+	}
+	var resp schema.ResponseEnvelope
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp.ID != "resp-1" {
+		t.Errorf("ID: got %q, want resp-1", resp.ID)
+	}
+}
+
+func TestChatHandler_UseCaseHeader(t *testing.T) {
+	published := make(chan *schema.CallEvent, 1)
+	fakeBus := &captureBus{ch: published}
+
+	p := &stubProvider{
+		name: "test",
+		resp: &schema.ResponseEnvelope{ID: "r1", Choices: []schema.Choice{{}}},
+	}
+	h := NewChatHandler(fixedRouter(p), fakeBus)
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions",
+		bytes.NewReader([]byte(`{"model":"gpt-4o","messages":[]}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-IXR-UseCase", "test-case-42")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+
+	ev := <-published
+	if ev.UseCaseID != "test-case-42" {
+		t.Errorf("use_case_id: got %q, want test-case-42", ev.UseCaseID)
+	}
+}
+
+// captureBus implements bus.Bus and captures published events.
+type captureBus struct {
+	ch chan *schema.CallEvent
+}
+
+func (b *captureBus) Publish(_ context.Context, ev *schema.CallEvent) error {
+	b.ch <- ev
+	return nil
+}
+
+func (b *captureBus) Subscribe(_ plugin.EventConsumer) {}
