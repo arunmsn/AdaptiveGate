@@ -25,6 +25,7 @@ type CallEvent struct {
 type RequestEnvelope struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
+	Stream   bool      `json:"stream,omitempty"`
 }
 
 // ResponseEnvelope is ixr's canonical representation of a chat response,
