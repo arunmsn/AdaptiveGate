@@ -1,0 +1,24 @@
+package schema
+
+import "time"
+
+// TelemetryRecord is the extended record written by the telemetry plugin.
+// It carries routing-decision metadata beyond what CallEvent holds,
+// and is what the scoring engine reads to update the model performance store.
+type TelemetryRecord struct {
+	RequestID    string    `json:"request_id"`
+	UseCaseID    string    `json:"use_case_id"`
+	TenantID     string    `json:"tenant_id"`
+	Intent       string    `json:"intent"`
+	Model        string    `json:"model"`
+	Provider     string    `json:"provider"`
+	LatencyMS    int       `json:"latency_ms"`
+	TokensIn     int       `json:"tokens_in"`
+	TokensOut    int       `json:"tokens_out"`
+	CostUSD      float64   `json:"cost_usd"`
+	Success      bool      `json:"success"`
+	FinishReason string    `json:"finish_reason"`
+	FallbackUsed bool      `json:"fallback_used"` // was the primary model bypassed?
+	FallbackFrom string    `json:"fallback_from"` // which model failed
+	Timestamp    time.Time `json:"timestamp"`
+}

@@ -1,0 +1,36 @@
+# binaries
+/bin/
+dist/
+
+# build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# test artifacts
+*.test
+*.out
+coverage.txt
+
+# dependency cache
+vendor/
+
+# ide
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# env
+.env
+.env.*
+
+# os
+.DS_Store
+Thumbs.db
+
+# internal planning docs — not for public history
+prd.md
+CLAUDE.md
