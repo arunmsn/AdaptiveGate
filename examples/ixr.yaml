@@ -1,0 +1,10 @@
+server:
+  port: 7000
+
+log_level: info
+
+providers:
+  openai:
+    api_key: ${OPENAI_API_KEY}
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}

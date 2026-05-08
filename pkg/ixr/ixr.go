@@ -19,6 +19,7 @@ import (
 	auditlog "github.com/ixr/ixr/plugins/audit-log"
 
 	"github.com/ixr/ixr/internal/adapters/bus"
+	cfgloader "github.com/ixr/ixr/internal/adapters/config"
 	"github.com/ixr/ixr/internal/adapters/pluginmgr"
 	"github.com/ixr/ixr/internal/adapters/providers/anthropic"
 	"github.com/ixr/ixr/internal/adapters/providers/openai"
@@ -30,12 +31,19 @@ import (
 type Option func(*config)
 
 type config struct {
-	port int
+	port       int
+	configFile string
 }
 
 // WithPort overrides the listen port (default: 7000).
 func WithPort(port int) Option {
 	return func(c *config) { c.port = port }
+}
+
+// WithConfigFile loads configuration from the given ixr.yaml path.
+// Provider credentials in the file may use ${ENV_VAR} syntax.
+func WithConfigFile(path string) Option {
+	return func(c *config) { c.configFile = path }
 }
 
 // Start starts the ixr proxy and blocks until the process receives SIGINT/SIGTERM
@@ -46,34 +54,23 @@ func Start(opts ...Option) error {
 		o(cfg)
 	}
 
-	// Build provider registry from environment.
-	// Config-file loading comes in phase 1 day 5.
-	registry := map[string]provider.Provider{}
-
-	if key := os.Getenv("OPENAI_API_KEY"); key != "" {
-		registry["openai"] = openai.New(key, "")
-	}
-	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
-		registry["anthropic"] = anthropic.New(key, "")
+	registry, port, err := buildRegistry(cfg)
+	if err != nil {
+		return err
 	}
 
-	if len(registry) == 0 {
-		return fmt.Errorf("ixr: no providers configured — set OPENAI_API_KEY and/or ANTHROPIC_API_KEY")
-	}
-
-	// Model-prefix router: gpt-* → openai, claude-* → anthropic (day 3).
 	router := ingress.Router(func(model string) (provider.Provider, error) {
 		switch {
 		case strings.HasPrefix(model, "gpt-") || strings.HasPrefix(model, "o1") || strings.HasPrefix(model, "o3"):
 			p, ok := registry["openai"]
 			if !ok {
-				return nil, fmt.Errorf("openai provider not configured; set OPENAI_API_KEY")
+				return nil, fmt.Errorf("openai provider not configured")
 			}
 			return p, nil
 		case strings.HasPrefix(model, "claude-"):
 			p, ok := registry["anthropic"]
 			if !ok {
-				return nil, fmt.Errorf("anthropic provider not configured; set ANTHROPIC_API_KEY")
+				return nil, fmt.Errorf("anthropic provider not configured")
 			}
 			return p, nil
 		default:
@@ -81,7 +78,6 @@ func Start(opts ...Option) error {
 		}
 	})
 
-	// Event bus + plugins.
 	memBus := bus.NewMemory(0)
 	mgr := pluginmgr.New(memBus)
 	mgr.Register(&auditlog.Plugin{})
@@ -94,5 +90,59 @@ func Start(opts ...Option) error {
 
 	go memBus.Start(ctx)
 
-	return ingress.NewServer(cfg.port, mux).Run(ctx)
+	return ingress.NewServer(port, mux).Run(ctx)
+}
+
+// buildRegistry constructs the provider map and effective port from config file or env vars.
+func buildRegistry(cfg *config) (map[string]provider.Provider, int, error) {
+	// Try config file first: explicit path → auto-discover → fall back to env.
+	var fileCfg *cfgloader.Config
+	var err error
+
+	if cfg.configFile != "" {
+		fileCfg, err = cfgloader.Load(cfg.configFile)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		fileCfg, err = cfgloader.Discover()
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	registry := map[string]provider.Provider{}
+	port := cfg.port
+
+	if fileCfg != nil {
+		if fileCfg.Server.Port != 0 && cfg.port == 7000 {
+			port = fileCfg.Server.Port
+		}
+		for name, pc := range fileCfg.Providers {
+			switch name {
+			case "openai":
+				if pc.APIKey != "" {
+					registry["openai"] = openai.New(pc.APIKey, pc.BaseURL)
+				}
+			case "anthropic":
+				if pc.APIKey != "" {
+					registry["anthropic"] = anthropic.New(pc.APIKey, pc.BaseURL)
+				}
+			}
+		}
+	}
+
+	// Env vars supplement or override config file.
+	if key := os.Getenv("OPENAI_API_KEY"); key != "" {
+		registry["openai"] = openai.New(key, "")
+	}
+	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+		registry["anthropic"] = anthropic.New(key, "")
+	}
+
+	if len(registry) == 0 {
+		return nil, 0, fmt.Errorf("ixr: no providers configured — set OPENAI_API_KEY and/or ANTHROPIC_API_KEY, or provide ixr.yaml")
+	}
+
+	return registry, port, nil
 }
