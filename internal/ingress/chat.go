@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/ixr/ixr/pkg/bus"
 	"github.com/ixr/ixr/pkg/provider"
 	"github.com/ixr/ixr/pkg/schema"
 )
@@ -16,11 +18,13 @@ type Router func(model string) (provider.Provider, error)
 // It is OpenAI-compatible: existing SDKs point at ixr with no code changes.
 type ChatHandler struct {
 	router Router
+	bus    bus.Bus
 }
 
 // NewChatHandler creates a handler that delegates to router for provider selection.
-func NewChatHandler(router Router) *ChatHandler {
-	return &ChatHandler{router: router}
+// Pass a non-nil bus to emit CallEvents after each request.
+func NewChatHandler(router Router, b bus.Bus) *ChatHandler {
+	return &ChatHandler{router: router, bus: b}
 }
 
 func (h *ChatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +56,32 @@ func (h *ChatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	start := time.Now()
 	resp, err := p.Chat(r.Context(), &req)
+	latency := time.Since(start)
+
+	if h.bus != nil {
+		ev := &schema.CallEvent{
+			Timestamp: start,
+			Provider:  p.Name(),
+			Model:     req.Model,
+			Latency:   latency,
+			Request:   req,
+			UseCaseID: r.Header.Get("X-IXR-UseCase"),
+		}
+		if err != nil {
+			ev.Error = err.Error()
+		} else {
+			ev.ID = resp.ID
+			ev.TokensIn = resp.Usage.PromptTokens
+			ev.TokensOut = resp.Usage.CompletionTokens
+			ev.Response = *resp
+		}
+		if pubErr := h.bus.Publish(r.Context(), ev); pubErr != nil {
+			slog.Warn("bus publish error", "err", pubErr)
+		}
+	}
+
 	if err != nil {
 		slog.Error("provider error", "provider", p.Name(), "model", req.Model, "err", err)
 		writeError(w, http.StatusBadGateway, "provider_error", "upstream provider returned an error")
