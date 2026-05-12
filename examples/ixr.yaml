@@ -8,3 +8,14 @@ providers:
     api_key: ${OPENAI_API_KEY}
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
+  # Google AI Studio (same key for Gemini + Gemma free-tier models).
+  gemini:
+    api_key: ${GOOGLE_API_KEY}
+  gemma:
+    api_key: ${GOOGLE_API_KEY}
+  # Groq free tier — Llama family (e.g. llama-3.1-8b-instant).
+  llama:
+    api_key: ${GROQ_API_KEY}
+  # DeepSeek (e.g. deepseek-chat).
+  deepseek:
+    api_key: ${DEEPSEEK_API_KEY}
