@@ -53,9 +53,9 @@ func TestCapabilityMatch(t *testing.T) {
 func TestReasoningRouting(t *testing.T) {
 
 	req := RequestContext{
-		ReasoningScore:   1.0,
-		MathScore:        0.9,
-		MaxCostUSDPer1M:  100,
+		ReasoningScore:  1.0,
+		MathScore:       0.9,
+		MaxCostUSDPer1M: 100,
 	}
 
 	results := Route(req)
@@ -99,8 +99,8 @@ func TestCodingRouting(t *testing.T) {
 func TestBudgetFiltering(t *testing.T) {
 
 	req := RequestContext{
-		ReasoningScore:   0.5,
-		MaxCostUSDPer1M:  0.10,
+		ReasoningScore:  0.5,
+		MaxCostUSDPer1M: 0.10,
 	}
 
 	results := Route(req)
